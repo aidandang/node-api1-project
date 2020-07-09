@@ -1,18 +1,36 @@
-// require the express npm module, needs to be added to the project using "npm install express"
 const express = require('express');
+const shortid = require('shortid');
 
-// creates an express application using the express module
 const server = express();
+server.use(express.json());
 
-// configures our server to execute a function for every GET request to "/"
-// the second argument passed to the .get() method is the "Route Handler Function"
-// the route handler function will run on every GET request to "/"
-server.get('/', (req, res) => {
-  // express will pass the request and response objects to this function
-  // the .send() on the response object can be used to send a response to the client
-  res.send('Hello World');
-});
+let users = [];
 
-// once the server is fully configured we can have it "listen" for connections on a particular "port"
-// the callback function passed as the second argument will run once when the server starts
-server.listen(8000, () => console.log('API running on port 8000'));
+// GET request
+server.get('/api/users', (req, res) => {
+  if (!users) {
+    res.status(500).json({ errorMessage: "The users information could not be retrieved." });
+  } else {
+    res.status(200).json({ users });
+  }
+})
+
+// POST request
+server.post('/api/users', (req, res) => {
+  const newUser = { ...req.body };
+  newUser.id = shortid.generate();
+
+  if ((!newUser.name) || (!newUser.bio)) {
+    res.status(400).json({ errorMessage: "Please provide name and bio for the user."})
+  } else {
+    users.push(newUser);
+    if (users.find(user => user.id === newUser.id)) {
+      res.status(201).json({ user: newUser })
+    } else {
+      res.status(500).json({ errorMessage: "There was an error while saving the user to the database." })
+    }
+  }
+})
+
+const PORT = 5000;
+server.listen(PORT, () => console.log('API running on port:', 5000));
